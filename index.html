@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>遗传病风险推测</title>
+  <style>
+    body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f7fb;margin:0;padding:20px;color:#0f172a}
+    .wrap{max-width:980px;margin:0 auto;display:grid;gap:16px}
+    .card{background:#fff;border:1px solid #dbe4f6;border-radius:14px;padding:16px}
+    h2{margin:0 0 10px}.row{display:flex;gap:10px;flex-wrap:wrap}
+    input,select,button{font-size:16px;padding:10px;border-radius:10px;border:1px solid #cfd8ea}
+    button{cursor:pointer}.primary{background:#2563eb;color:#fff;border:none}
+    .members{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.chip{padding:8px;border:1px solid #d6deef;border-radius:10px;background:#fff;text-align:center}
+    .list{margin-top:10px;border:1px dashed #c9d6ef;border-radius:10px;padding:10px;min-height:60px}
+    .hidden{display:none}.modal{position:fixed;inset:0;background:rgba(2,6,23,.45);display:none;align-items:center;justify-content:center}
+    .dialog{background:#fff;border-radius:12px;padding:16px;min-width:300px}.dialog .row{justify-content:flex-end;margin-top:12px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #d6deef;padding:8px;text-align:center}th{background:#f1f5f9}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h2>1）选择遗传病</h2>
+    <div class="row">
+      <select id="diseaseSelect"></select>
+      <input id="newDisease" placeholder="新增遗传病名称" />
+      <button id="addDisease">添加遗传病</button>
+    </div>
+    <p>遗传模式：常染色体显性（完整外显）　致病等位基因频率 f = <span id="freqText">0.001</span></p>
+  </div>
+
+  <div class="card">
+    <h2>2）添加家庭成员</h2>
+    <div class="members" id="memberBtns"></div>
+    <div class="list" id="memberList">暂无成员数据</div>
+  </div>
+
+  <div class="card"><div class="row"><button class="primary" id="calcBtn">计算患病风险与基因型概率</button><button id="resetBtn">重置</button></div></div>
+
+  <div class="card hidden" id="resultCard">
+    <h2>评估结果</h2>
+    <p>遗传病：<b id="rDisease"></b></p>
+    <p>样本成员数：<b id="rCount"></b>；患病人数：<b id="rIll"></b>；健康人数：<b id="rHealthy"></b></p>
+    <p>风险估计值：<b id="rRisk"></b></p>
+    <h3>每位成员基因型概率（AA / Aa / aa）</h3>
+    <table>
+      <thead><tr><th>成员</th><th>状态</th><th>AA</th><th>Aa</th><th>aa</th></tr></thead>
+      <tbody id="genoBody"></tbody>
+    </table>
+    <p style="color:#64748b">说明：若无法精确锁定基因型，则按条件概率输出概率分布，不做武断排除。</p>
+  </div>
+</div>
+
+<div class="modal" id="statusModal"><div class="dialog"><h3 id="modalTitle">选择健康状态</h3><div class="row" style="justify-content:flex-start"><button data-status="患病" class="primary statusBtn">患病</button><button data-status="健康" class="statusBtn">健康</button></div><div class="row"><button id="cancelModal">取消</button></div></div></div>
+
+<script>
+const diseases=["神经纤维瘤病","血友病","地中海贫血"];const relationPool=["爷爷","奶奶","外公","外婆","父亲","母亲","伯伯","叔叔","舅舅","姑姑","儿子","女儿"];const members=[];let pendingRelation="";const f=0.001;
+const diseaseSelect=document.getElementById("diseaseSelect"),memberBtns=document.getElementById("memberBtns"),memberList=document.getElementById("memberList"),modal=document.getElementById("statusModal"),modalTitle=document.getElementById("modalTitle");
+
+document.getElementById("freqText").textContent=f;
+function renderDiseases(){diseaseSelect.innerHTML=diseases.map(d=>`<option value="${d}">${d}</option>`).join("")}
+function renderMemberBtns(){memberBtns.innerHTML=relationPool.map(r=>`<button class="chip" data-relation="${r}">+ ${r}</button>`).join("");memberBtns.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{pendingRelation=btn.dataset.relation;modalTitle.textContent=`请选择 ${pendingRelation} 的健康状态`;modal.style.display="flex";});}
+function renderMemberList(){if(!members.length){memberList.textContent="暂无成员数据";return;}memberList.innerHTML=members.map((m,i)=>`${i+1}. ${m.relation} - ${m.status}`).join("<br/>")}
+function pct(x){return (x*100).toFixed(2)+"%"}
+function genoProbByStatus(status){
+  const pAA=f*f, pAa=2*f*(1-f), paa=(1-f)*(1-f);
+  if(status==="健康") return {AA:0,Aa:0,aa:1};
+  const z=pAA+pAa;
+  return {AA:pAA/z,Aa:pAa/z,aa:0};
+}
+
+addDisease.onclick=()=>{const name=newDisease.value.trim();if(!name) return;if(!diseases.includes(name)) diseases.push(name);renderDiseases();diseaseSelect.value=name;newDisease.value="";};
+document.querySelectorAll(".statusBtn").forEach(btn=>btn.onclick=()=>{members.push({relation:pendingRelation,status:btn.dataset.status});modal.style.display="none";renderMemberList();});
+cancelModal.onclick=()=>modal.style.display="none";
+
+calcBtn.onclick=()=>{
+  const ill=members.filter(m=>m.status==="患病").length, healthy=members.filter(m=>m.status==="健康").length;
+  rDisease.textContent=diseaseSelect.value; rCount.textContent=members.length; rIll.textContent=ill; rHealthy.textContent=healthy;
+  rRisk.textContent=(members.length?((ill/members.length)*100).toFixed(1):"0.0")+"%";
+  genoBody.innerHTML=members.map(m=>{const g=genoProbByStatus(m.status);return `<tr><td>${m.relation}</td><td>${m.status}</td><td>${pct(g.AA)}</td><td>${pct(g.Aa)}</td><td>${pct(g.aa)}</td></tr>`}).join("");
+  resultCard.classList.remove("hidden");
+};
+resetBtn.onclick=()=>{members.length=0;renderMemberList();resultCard.classList.add("hidden");genoBody.innerHTML="";};
+renderDiseases();renderMemberBtns();renderMemberList();
+</script>
+</body>
+</html>
