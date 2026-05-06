@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>遗传病推测网页</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --light-blue: #eef4ff;
+      --border: #d8e3f7;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f7fb;
+      color: var(--text);
+    }
+    .container { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+    .card {
+      background: #fff;
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+    }
+    h2 { margin: 0 0 14px; font-size: 34px; color: var(--blue); text-align: center; }
+    .subtitle { text-align: center; color: var(--muted); margin-bottom: 20px; }
+    .tag { display: inline-block; padding: 8px 18px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 28px; }
+    .center { text-align: center; }
+    .risk-box { background: #f9eef0; border-radius: 14px; padding: 24px; margin-top: 16px; }
+    .risk-number { color: #1d4ed8; font-size: 68px; font-weight: 800; line-height: 1; }
+    .badge { display:inline-block; margin: 8px 0 14px; background:#ff2f3f; color:#fff; border-radius: 999px; padding: 6px 20px; font-size: 30px; }
+    .bar-wrap { margin-top: 18px; }
+    .bar-head { display: flex; justify-content: space-between; font-size: 22px; margin-bottom: 6px; }
+    .bar { height: 16px; border-radius: 999px; background: #111827; }
+    .section-title { font-size: 32px; font-weight: 800; margin: 0 0 12px; }
+    .small { color: var(--muted); }
+    .analysis {
+      margin-top: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 14px;
+    }
+    .input {
+      width: 100%;
+      border: 2px solid #3b82f6;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 30px;
+      outline: none;
+    }
+    .family-box {
+      border: 2px dashed #dbe4f6;
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+    .placeholder {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      min-height: 130px;
+      display: grid;
+      place-content: center;
+      color: #94a3b8;
+      font-size: 32px;
+      margin-bottom: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .btn {
+      border: 1px solid #d1d5db;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 24px;
+      text-align: center;
+    }
+    .action-row { display:flex; gap: 14px; margin-top: 16px; }
+    .primary { flex:1; background:#2563eb; color:#fff; border:0; padding:14px; border-radius: 12px; font-size: 30px; }
+    .ghost { width:120px; border:1px solid #d1d5db; border-radius:12px; font-size:30px; background:#fff; }
+    .hint { background:#ecf3ff; border-left:4px solid #60a5fa; padding: 14px; border-radius: 8px; margin-top: 14px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 22px; }
+    .table th, .table td { border:1px solid #d6dee8; padding: 10px; text-align: center; }
+    .table th { background:#f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>遗传病推测网页</h2>
+      <div class="subtitle">根据家族成员健康状态，模拟遗传病风险估计</div>
+
+      <p class="section-title">1️⃣ 选择遗传病</p>
+      <p class="small">搜索或选择家族中存在的遗传病</p>
+      <input class="input" value="神经纤维瘤病" />
+
+      <p class="section-title" style="margin-top:20px;">2️⃣ 家族成员健康状况</p>
+      <p class="small">请先选择上方遗传病以查看遗传规律说明</p>
+      <div class="family-box">
+        <div class="placeholder">暂无家族成员，点击下方按钮添加</div>
+        <div class="grid">
+          <div class="btn">+ 爷爷</div><div class="btn">+ 奶奶</div><div class="btn">+ 外公</div><div class="btn">+ 外婆</div>
+          <div class="btn">+ 父亲</div><div class="btn">+ 母亲</div><div class="btn">+ 伯伯</div><div class="btn">+ 叔叔</div>
+          <div class="btn">+ 姑姑</div><div class="btn">+ 舅舅</div><div class="btn">+ 姨姨</div><div class="btn">+ 堂兄</div>
+          <div class="btn">+ 堂姐</div><div class="btn">+ 表兄</div><div class="btn">+ 表姐</div><div class="btn">+ 儿子</div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="primary">🧮 计算患病风险</button>
+        <button class="ghost">重置</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-title">📊 概率计算分析</p>
+      <p style="font-size:30px;">患病风险：<span style="color:#1d4ed8;">100.0%</span> <span style="color:#ef4444;">⚠️ 风险较高，需重点关注</span></p>
+      <div class="hint">
+        遗传模式：<b>常染色体显性遗传</b>；计算方法：普通概率分析。
+      </div>
+      <table class="table">
+        <tr><th>称呼</th><th>实际状况</th><th>AA</th><th>Aa</th><th>aa</th></tr>
+        <tr><td>爷爷</td><td style="color:#16a34a;">健康</td><td>0.0%</td><td>0.0%</td><td><b>100.0%</b></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <p class="section-title">✨ 评估结果</p>
+      <div class="center"><span class="tag">神经纤维瘤病</span></div>
+      <div class="risk-box center">
+        <div class="risk-number">100.0%</div>
+        <div class="badge">高风险</div>
+        <div style="font-size:34px;">新生儿患神经纤维瘤病的概率</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-head"><span>患病概率</span><strong style="color:#1d4ed8">100.0%</strong></div>
+        <div class="bar"></div>
+      </div>
+      <div class="analysis">
+        <h3 style="font-size:30px;margin:0 0 8px;">👥 基因型推断分析</h3>
+        <div style="border:1px solid #d6dee8; border-radius:10px; padding:10px; width:460px; max-width:100%;">
+          <div style="font-size:30px;">paternal_grandfather</div>
+          <div style="font-size:28px; margin-top:6px;">aa:100.0%, Aa:0.0%, AA:0.0%</div>
+          <div class="small" style="margin-top:6px;">健康 → 最可能是患者（大概率）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
