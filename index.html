@@ -3,106 +3,136 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>遗传病通用概率推理框架（贝叶斯网络）</title>
+  <title>遗传病风险推测</title>
   <style>
-    :root { --blue:#1d4ed8; --bg:#f6f8fc; --card:#fff; --line:#dbe5f6; --text:#0f172a; --muted:#64748b; }
-    *{box-sizing:border-box}
-    body{margin:0;padding:24px;background:var(--bg);font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text)}
-    .wrap{max-width:1080px;margin:0 auto;display:grid;gap:16px}
-    .card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px}
-    h1{margin:0;color:var(--blue);font-size:30px}
-    h2{margin:0 0 8px;font-size:22px}
-    p,li{line-height:1.7}
-    .muted{color:var(--muted)}
-    .pill{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:999px;padding:5px 12px;font-weight:700;margin-right:8px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid #d6dee8;padding:8px;text-align:left;vertical-align:top}
-    th{background:#f1f5f9}
-    pre{background:#0b1220;color:#e2e8f0;padding:12px;border-radius:10px;overflow:auto;font-size:13px}
-    .eq{background:#eff6ff;border-left:4px solid #60a5fa;padding:10px 12px;border-radius:8px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f7fb;margin:0;padding:20px;color:#0f172a}
+    .wrap{max-width:960px;margin:0 auto;display:grid;gap:16px}
+    .card{background:#fff;border:1px solid #dbe4f6;border-radius:14px;padding:16px}
+    h2{margin:0 0 10px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    input,select,button{font-size:16px;padding:10px;border-radius:10px;border:1px solid #cfd8ea}
+    button{cursor:pointer}
+    .primary{background:#2563eb;color:#fff;border:none}
+    .members{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .chip{padding:8px;border:1px solid #d6deef;border-radius:10px;background:#fff;text-align:center}
+    .list{margin-top:10px;border:1px dashed #c9d6ef;border-radius:10px;padding:10px;min-height:60px}
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.45);display:none;align-items:center;justify-content:center}
+    .dialog{background:#fff;border-radius:12px;padding:16px;min-width:300px}
+    .dialog .row{justify-content:flex-end;margin-top:12px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>遗传病推断：全概率贝叶斯框架（可直接编码）</h1>
-      <p class="muted">目标：不做近似排除，保留极小先验概率，输出所有基因型可能性的严格后验分布。</p>
-      <div><span class="pill">Bayesian Network</span><span class="pill">Variable Elimination</span><span class="pill">Log-Probability</span></div>
-    </div>
-
-    <div class="card">
-      <h2>一、核心建模（离散贝叶斯网络）</h2>
-      <ul>
-        <li>节点：每个个体一个随机变量，取值为该遗传模式下的基因型。</li>
-        <li>边：父母 → 子女，表示等位基因传递。</li>
-        <li>因子：奠基者先验 + 家庭传递CPT + 表型似然。</li>
-        <li>输出：每个个体基因型后验 <b>P(g_i|E)</b> 与模型证据 <b>P(E|M)</b>。</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>二、模式定义（AR / AD / XR / XD / Y）</h2>
-      <table>
-        <tr><th>模式</th><th>基因型域</th><th>完全外显率规则（患病）</th></tr>
-        <tr><td>AR</td><td>AA, Aa, aa</td><td>仅 aa 患病</td></tr>
-        <tr><td>AD</td><td>AA, Aa, aa</td><td>AA 或 Aa 患病</td></tr>
-        <tr><td>XR</td><td>女: XAXA/XAXa/XaXa；男: XAY/XaY</td><td>女仅 XaXa；男仅 XaY</td></tr>
-        <tr><td>XD</td><td>同 XR</td><td>女 XAXA/XAXa；男 XAY 患病</td></tr>
-        <tr><td>Y</td><td>男: YA/Ya；女固定正常</td><td>男仅 Ya 患病</td></tr>
-      </table>
-    </div>
-
-    <div class="card grid">
-      <div>
-        <h2>三、先验与传递</h2>
-        <p><b>奠基者先验</b>（Hardy-Weinberg）：</p>
-        <div class="eq">常染色体：P(AA)=(1-f)^2, P(Aa)=2f(1-f), P(aa)=f^2</div>
-        <p>伴X与伴Y按性别定义对应先验。家庭内子代CPT按孟德尔分离自动枚举生成。</p>
-      </div>
-      <div>
-        <h2>四、证据似然</h2>
-        <p>每个个体观测表型 E（患病/正常），映射为：</p>
-        <div class="eq">P(E|g)=penetrance(g)（患病）或 1-penetrance(g)（正常）</div>
-        <p>完全外显下，不相容基因型似然 = 0（硬约束）。</p>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>五、推理算法（推荐变量消元）</h2>
-      <pre>for mode in [AR, AD, XR, XD, Y]:
-  define genotype domain for each person
-  factors = []
-  add founder-prior factors
-  add transmission factors P(g_child | g_father, g_mother)
-  add phenotype likelihood factors P(E_i | g_i)
-
-  posterior(targets) = variable_elimination(factors)
-  log_evidence(mode) = log Z
-
-if compare_modes:
-  P(mode|E) = softmax(log_evidence(mode) + log prior(mode))</pre>
-      <p class="muted">小家系（≤20人）可直接全状态枚举，保证严格精确并覆盖所有极小概率分支。</p>
-    </div>
-
-    <div class="card">
-      <h2>六、数值稳定性（极小概率）</h2>
-      <ul>
-        <li>统一在 <b>log 空间</b>计算联合概率：log_joint = Σlog(prior)+Σlog(CPT)+Σlog(likelihood)。</li>
-        <li>归一化使用 log-sum-exp，防止下溢。</li>
-        <li>不引入“近似排除规则”，仅由证据似然决定是否为零。</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>七、输出格式建议</h2>
-      <ul>
-        <li>每种遗传方式：log证据、证据后验概率、每个目标成员的基因型后验分布。</li>
-        <li>统一展示“前3高概率基因型 + 完整分布JSON”，便于前端与API对接。</li>
-        <li>可增设参数：不完全外显率、de novo突变率、纯合致死惩罚项。</li>
-      </ul>
+<div class="wrap">
+  <div class="card">
+    <h2>1）选择遗传病</h2>
+    <div class="row">
+      <select id="diseaseSelect"></select>
+      <input id="newDisease" placeholder="新增遗传病名称" />
+      <button id="addDisease">添加遗传病</button>
     </div>
   </div>
+
+  <div class="card">
+    <h2>2）添加家庭成员</h2>
+    <div class="members" id="memberBtns"></div>
+    <div class="list" id="memberList">暂无成员数据</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="primary" id="calcBtn">计算患病风险</button>
+      <button id="resetBtn">重置</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <h2>评估结果</h2>
+    <p>遗传病：<b id="rDisease"></b></p>
+    <p>样本成员数：<b id="rCount"></b></p>
+    <p>患病人数：<b id="rIll"></b>，健康人数：<b id="rHealthy"></b></p>
+    <p>演示风险值：<b id="rRisk"></b></p>
+    <p style="color:#64748b">说明：当前为交互演示版；你后续可替换为严格贝叶斯计算核心。</p>
+  </div>
+</div>
+
+<div class="modal" id="statusModal">
+  <div class="dialog">
+    <h3 id="modalTitle">选择健康状态</h3>
+    <div class="row" style="justify-content:flex-start">
+      <button data-status="患病" class="primary statusBtn">患病</button>
+      <button data-status="健康" class="statusBtn">健康</button>
+    </div>
+    <div class="row"><button id="cancelModal">取消</button></div>
+  </div>
+</div>
+
+<script>
+const diseases = ["神经纤维瘤病","血友病","地中海贫血"];
+const relationPool = ["爷爷","奶奶","外公","外婆","父亲","母亲","伯伯","叔叔","舅舅","姑姑","儿子","女儿"];
+const members = [];
+let pendingRelation = "";
+
+const diseaseSelect = document.getElementById("diseaseSelect");
+const memberBtns = document.getElementById("memberBtns");
+const memberList = document.getElementById("memberList");
+const modal = document.getElementById("statusModal");
+const modalTitle = document.getElementById("modalTitle");
+
+function renderDiseases(){
+  diseaseSelect.innerHTML = diseases.map(d=>`<option value="${d}">${d}</option>`).join("");
+}
+function renderMemberBtns(){
+  memberBtns.innerHTML = relationPool.map(r=>`<button class="chip" data-relation="${r}">+ ${r}</button>`).join("");
+  memberBtns.querySelectorAll("button").forEach(btn=>{
+    btn.onclick=()=>{
+      pendingRelation = btn.dataset.relation;
+      modalTitle.textContent = `请选择 ${pendingRelation} 的健康状态`;
+      modal.style.display = "flex";
+    };
+  });
+}
+function renderMemberList(){
+  if(!members.length){ memberList.textContent="暂无成员数据"; return; }
+  memberList.innerHTML = members.map((m,i)=>`${i+1}. ${m.relation} - ${m.status}`).join("<br/>");
+}
+
+document.getElementById("addDisease").onclick=()=>{
+  const name = document.getElementById("newDisease").value.trim();
+  if(!name) return;
+  if(!diseases.includes(name)) diseases.push(name);
+  renderDiseases();
+  diseaseSelect.value = name;
+  document.getElementById("newDisease").value = "";
+};
+
+document.querySelectorAll(".statusBtn").forEach(btn=>{
+  btn.onclick=()=>{
+    members.push({relation: pendingRelation, status: btn.dataset.status});
+    modal.style.display = "none";
+    renderMemberList();
+  }
+});
+document.getElementById("cancelModal").onclick=()=> modal.style.display="none";
+
+document.getElementById("calcBtn").onclick=()=>{
+  const resultCard = document.getElementById("resultCard");
+  const ill = members.filter(m=>m.status==="患病").length;
+  const healthy = members.filter(m=>m.status==="健康").length;
+  const risk = members.length? ((ill/members.length)*100).toFixed(1)+"%":"0.0%";
+  document.getElementById("rDisease").textContent = diseaseSelect.value;
+  document.getElementById("rCount").textContent = members.length;
+  document.getElementById("rIll").textContent = ill;
+  document.getElementById("rHealthy").textContent = healthy;
+  document.getElementById("rRisk").textContent = risk;
+  resultCard.classList.remove("hidden");
+};
+
+document.getElementById("resetBtn").onclick=()=>{ members.length=0; renderMemberList(); document.getElementById("resultCard").classList.add("hidden"); };
+
+renderDiseases();
+renderMemberBtns();
+renderMemberList();
+</script>
 </body>
 </html>
